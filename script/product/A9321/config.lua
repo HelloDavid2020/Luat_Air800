@@ -1,0 +1,34 @@
+module(...)
+
+prot = "TCP"
+addr = "lbsmqtt.airm2m.com"
+port = "1883"
+rptfreq = 10
+almfreq = 2
+heart = 900
+guard = false
+gpslbsmix = true
+lbstyp = 2
+fixmod = "GPS" --LBS,GPS
+adminum = ""
+lastworkmod = "GPS"
+workmod = "GPS" --GPS,PWRGPS,LONGPS,LONGIDLE,ONEYIDLE
+workmodpend = false
+sleep = false
+gpsleep = false
+led = true
+firstpower = true
+lastlng = ""
+lastlat = ""
+cellastlbs = ""
+callDmode = false
+trace = false
+traceidx = 1
+powerofflg = 0
+restflg = 0
+locrp = true
+autoguard = true
+autosleep = true
+horn = false
+remoteid = ""
+histgps = {}
