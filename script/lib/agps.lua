@@ -336,7 +336,7 @@ end
 local agpsstr
 --[[
 函数名：setagpstr
-功能  ：获取经纬度值
+功能  ：设置经纬度值
 参数：  无
 返回值：无
 ]]
@@ -346,7 +346,7 @@ local function setagpstr(str)
 end
 
 --[[
-函数名：setsucstr
+函数名：getagpstr
 功能  ：获取经纬度值
 参数：  无
 返回值：无
@@ -423,6 +423,7 @@ local function datetime(m)
 	mt.min = sbyte(m,5)
 	mt.sec = sbyte(m,6)
 	print("datetime",mt.year,mt.month,mt.day,mt.hour,mt.min,mt.sec)
+	misc.setclock(mt)
 	return true
 end
 
@@ -447,7 +448,7 @@ local function rcv(id,data)
 		local str = '$PGKC635,'..lat..','..lng..',0,'
 		print("syy rcv str",str)
 		if not gps.isfix() then
-		setagpstr(str)
+			setagpstr(str)
 		end
 		if gps.isopen() then
 			agpswr()	

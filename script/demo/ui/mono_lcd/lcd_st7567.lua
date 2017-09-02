@@ -6,15 +6,14 @@
 
 --[[
 disp库目前仅支持SPI接口的屏，硬件连线图如下：
-Air模块			LCD
-GND-------------GND
-SPI_CS----------CS
-SPI_CLK---------SCK
-SPI_DO----------SDA
-SPI_DI----------RS
-VDDIO-----------VDD
-UART1_CTS-------RST
-注意：Air202早期的开发板，UART1的CTS和RTS的丝印反了
+Air800模块				LCD
+GND---------------------地
+GPIO10/SPI1_CS----------片选
+GPIO8/SPI1_CLK----------时钟
+GPIO11/SPI1_DO----------数据
+GPIO34------------------数据/命令选择
+VDDIO-------------------电源
+GPIO9-------------------复位
 ]]
 
 module(...,package.seeall)
@@ -28,13 +27,13 @@ module(...,package.seeall)
 local function init()
 	local para =
 	{
-		width = msc.WIDTH, --分辨率宽度，128像素；用户根据屏的参数自行修改
-		height = msc.HEIGHT, --分辨率高度，64像素；用户根据屏的参数自行修改
+		width = 128, --分辨率宽度，128像素；用户根据屏的参数自行修改
+		height = 64, --分辨率高度，64像素；用户根据屏的参数自行修改
 		bpp = 1, --位深度，1表示单色。单色屏就设置为1，不可修改
 		bus = disp.BUS_SPI, --led位标准SPI接口，不可修改
 		hwfillcolor = 0xFFFF, --填充色，黑色
-		pinrst = pio.P0_3, --reset，复位引脚
-		pinrs = pio.P0_12, --rs，命令/数据选择引脚
+		pinrst = pio.P0_9, --reset，复位引脚
+		pinrs = pio.P1_2, --rs，命令/数据选择引脚
 		--初始化命令
 		initcmd =
 		{
@@ -60,6 +59,8 @@ local function init()
 		}
 	}
 	disp.init(para)
+	disp.clear()
+	disp.update()
 end
 
 --控制SPI引脚的电压域

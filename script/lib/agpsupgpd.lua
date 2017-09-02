@@ -18,7 +18,6 @@ local RECONN_MAX_CNT,RECONN_PERIOD,RECONN_CYCLE_MAX_CNT,RECONN_CYCLE_PERIOD = 3,
 local reconncnt,reconncyclecnt,conning = 0,0
 local GPD_FILE = "/GPD.txt"
 local GPDTIME_FILE = "/GPDTIME.txt"
-local GPDTIME_FILEP = "/GPDTIMEP.txt"
 local gpdlen,wxlt
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
@@ -249,32 +248,19 @@ function changem(m)
 	end
 end
 
-local xlt
-function wxltime(t)
-	print("wxltime",t)	
-	local clk = {}
-	local a,b = nil,nil
-	xlt = t
-	a,b,clk.day,clk.month,clk.year,clk.hour,clk.min,clk.sec = string.find(t,"(%d+)% (%w+)% (%d+) *(%d%d):(%d%d):(%d%d)")
-	clk.month = changem(clk.month)
-	clk = common.transftimezone(clk.year,clk.month,clk.day,clk.hour,clk.min,clk.sec,0,8)
-	print(clk.year,clk.month,clk.day,clk.hour,clk.min,clk.sec )
-	wxlt = os.time({year=clk.year,month=clk.month,day=clk.day, hour=clk.hour, min=clk.min, sec=clk.sec})
-	print("wxltime",wxlt,os.time())
-end
-
 function rcv(idx,data)
 	print("syy rcv!!!!!!!!!!",slen(data))
 	--print("rcv",data)
+	local fs = string.find(data,"HTTP/1.1 400 BAD REQUEST")
+	if fs then socket.close(idx) return end
 	local str1 = string.find(data,"Length: ")
-	local dl = string.len("Length: ")
 	local t1,t2= string.find(data,"Modified: ")
 	if t2 then
-		local mt = ssub(data,t2+1,-5)
-		wxltime(mt)
+		local clk = os.date("*t")
+		wxlt = string.format("%04d%02d%02d%02d%02d%02d",clk.year,clk.month,clk.day,clk.hour,clk.min,clk.sec)
 	end
 	if str1 then  
-		gpdlen = ssub(data,str1+dl,str1+dl+3)
+		gpdlen = smatch(data,"Content%-Length: (%d+)")
 	end
 	print("syy len:",str1,gpdlen)
 	if str1 then
@@ -317,30 +303,28 @@ local function gpsstateind(id,data)
 			writebg = nil
 			idx = 0
 		end
-	elseif data ==	gps.GPS_BINW_END_ACK_EVT then
+	elseif data == gps.GPS_BINW_END_ACK_EVT then
 		print("syy gpsind GPS_BINW_END_ACK_EVT")
 		writeswname()
+		os.remove(GPD_FILE)
 		writetxt(GPDTIME_FILE,wxlt)
-		writetxt(GPDTIME_FILEP,xlt)		
+	elseif data == gps.GPS_OPEN_EVT then
+		checkup()	
 	end
 	return true
 end
 
-function uptimep()
-	local uptime = readtxt(GPDTIME_FILEP)
-	if uptime == "" then 
-		print("uptime nil")
-	else
-		print("uptime",uptime)
-	end
-end
-
 local function uptimeck()
-	uptimep()	
 	local uptime = readtxt(GPDTIME_FILE)
-	if uptime == "" then return true end
+	if uptime == "" then print("uptimeck nil") return true end
+	local clk = {}
+	local a,b = nil,nil
+	a,b,clk.year,clk.month,clk.day,clk.hour,clk.min,clk.sec = string.find(uptime,"(%d%d%d%d)(%d%d)(%d%d)(%d%d)(%d%d)(%d%d)")
+	print("uptimeck",clk.year,clk.month,clk.day,clk.hour,clk.min,clk.sec )
+	local xlt = os.time({year=clk.year,month=clk.month,day=clk.day, hour=clk.hour, min=clk.min, sec=clk.sec})
+	print("uptimeck",xlt,os.time())
 	local nowtime = os.time()
-	if os.difftime(nowtime,uptime) >= 6*3600 then
+	if os.difftime(nowtime,xlt) >= 4*3600 then
 		return true
 	end
 		return false
@@ -356,8 +340,8 @@ end
 返回值：无
 ]]
 function connect()
-	print("connect uptime",uptimeck())
-	if not uptimeck() then 
+	print("connect uptime",uptimeck(),gps.isfix())
+	if not uptimeck() or gps.isfix() then 
 		sys.dispatch("AGPS_WRDATE_END")
 		return 
 	end
@@ -374,15 +358,13 @@ end
 
 --connect()
 
-local function checkup()
+function checkup()
 	print("checkup",uptimeck())
 	if uptimeck() then
 		agps.connect()
 	end
 end
 
-uptimeck()
-sys.timer_start(checkup,600*1000)
 --为GPS提供32K时钟
 rtos.sys32k_clk_out(1)
 --注册GPS消息处理函数

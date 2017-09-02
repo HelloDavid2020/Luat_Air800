@@ -11,6 +11,17 @@ module(...,package.seeall)
 local lpack = require"pack"
 local ssub,schar,smatch,sbyte,slen,sgmatch,sgsub,srep = string.sub,string.char,string.match,string.byte,string.len,string.gmatch,string.gsub,string.rep
 
+--[[
+函数名：nemacb
+功能  ：NEMA数据的处理回调函数
+参数  ：
+		data：一条NEMA数据
+返回值：无
+]]
+local function nemacb(data)
+	print("nemacb",data)
+end
+
 --是否支持gps
 local gpsupport = true
 --如果支持gps，则打开gps
@@ -18,6 +29,7 @@ if gpsupport then
 	require"agps"
 	require"gps"
 	gps.init()
+	gps.setnemamode(2,nemacb)
 	gps.open(gps.DEFAULT,{cause="linkair"})
 end
 
